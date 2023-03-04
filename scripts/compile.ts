@@ -1,7 +1,5 @@
 import fs from 'fs';
 import { ResponseActivityRide } from 'ebike-connect-js';
-import { Simulate } from 'react-dom/test-utils';
-import input = Simulate.input;
 
 export const LOCALE = 'fr-FR';
 export const TIMEZONE = 'Europe/Paris';

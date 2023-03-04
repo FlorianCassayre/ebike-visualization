@@ -5,6 +5,7 @@ import React, { Fragment, useState } from 'react';
 import { ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const extractYear = (date: string) => parseInt(date.split('-')[0]);

@@ -1,0 +1,30 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Deploy
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          switches: -avzr --delete --exclude=data
+          path: build/
+          remote_path: bike
+          remote_host: bike.cassayre.me
+          remote_user: github
+          remote_key: ${{ secrets.DEPLOY_KEY }}
