@@ -1,5 +1,7 @@
 import fs from 'fs';
 import { ResponseActivityRide } from 'ebike-connect-js';
+import { Simulate } from 'react-dom/test-utils';
+import input = Simulate.input;
 
 export const LOCALE = 'fr-FR';
 export const TIMEZONE = 'Europe/Paris';
@@ -22,8 +24,12 @@ const writeTargets = (targets: Record<string, object>) => {
   });
 };
 
+const sum = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => a + b) : 0
+const max = (array: number[]): number => array.length > 0 ? Math.max(...array) : 0
+
 const reduceInputStatistics = (data: ResponseActivityRide[]) => ({
   count: data.length,
+  distance: sum(data.map(d => d.total_distance)),
 });
 
 const targetStatisticsDaily = (inputs: ResponseActivityRide[]) => {
@@ -40,6 +46,15 @@ const targetStatisticsDaily = (inputs: ResponseActivityRide[]) => {
     .map(([key, value]) => [key, reduceInputStatistics(value)]));
 };
 
+const targetRecords = (inputs: ResponseActivityRide[]) => ({
+  totalDistance: sum(inputs.map(input => input.total_distance)),
+  maxSpeed: max(inputs.map(input => input.max_speed)),
+  totalAltitudeGain: sum(inputs.map(input => input.elevation_gain)),
+  tripsCount: inputs.length,
+  totalCalories: sum(inputs.map(input => input.calories)),
+  totalOperationTime: sum(inputs.map(input => parseInt(input.operation_time))),
+});
+
 const compile = () => {
   console.log('Loading inputs...');
   const inputs = loadInputs();
@@ -47,6 +62,7 @@ const compile = () => {
 
   const targets = {
     statisticsDaily: targetStatisticsDaily(inputs),
+    records: targetRecords(inputs),
   };
 
   console.log('Creating targets...');

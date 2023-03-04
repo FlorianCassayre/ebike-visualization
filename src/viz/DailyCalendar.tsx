@@ -1,6 +1,6 @@
 import { Box, Button, Heading, HStack, IconButton, Tooltip, VStack } from '@chakra-ui/react';
 import { useDataQuery } from '../hooks/useDataQuery';
-import { Statistics } from '../types/types';
+import { TargetStatistics } from '../types/types';
 import React, { Fragment, useState } from 'react';
 import { ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
@@ -9,10 +9,21 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 const extractYear = (date: string) => parseInt(date.split('-')[0]);
 
-const makeCalendar = (entries: [string, Statistics][], year: number): ([string, Statistics | null] | undefined)[][] => {
+const colorForDistance = (distance: number) => {
+  const colorsAndThresholds: [number, string][] = [[0, 'green'], [10_000, 'teal'], [25_000, 'blue'], [50_000, 'purple']];
+  for (let i = colorsAndThresholds.length - 1; i >= 0; i--) {
+    const [threshold, color] = colorsAndThresholds[i];
+    if (distance >= threshold) {
+      return color;
+    }
+  }
+  throw new Error();
+};
+
+const makeCalendar = (entries: [string, TargetStatistics][], year: number): ([string, TargetStatistics | null] | undefined)[][] => {
   const filteredEntries = Object.fromEntries(entries.filter(([date,]) => extractYear(date) === year));
   const weekSize = 7;
-  const days: ([string, Statistics | null] | undefined)[] = [];
+  const days: ([string, TargetStatistics | null] | undefined)[] = [];
   let date = new Date();
   date.setFullYear(year);
   date.setMonth(0, 1);
@@ -22,14 +33,14 @@ const makeCalendar = (entries: [string, Statistics][], year: number): ([string, 
   }
   while (date.getFullYear() === year) {
     const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    const dataDay: Statistics | undefined = filteredEntries[key];
+    const dataDay: TargetStatistics | undefined = filteredEntries[key];
     days.push([key, dataDay ?? null]);
     date.setDate(date.getDate() + 1); // Add one day
   }
   while (days.length % weekSize !== 0) {
     days.push(undefined);
   }
-  const transposed: ([string, Statistics | null] | undefined)[][] = [];
+  const transposed: ([string, TargetStatistics | null] | undefined)[][] = [];
   for (let i = 0; i < weekSize; i++) {
     transposed.push([]);
     for (let j = 0; j < Math.floor(days.length / 7); j++) {
@@ -39,22 +50,22 @@ const makeCalendar = (entries: [string, Statistics][], year: number): ([string, 
   return transposed;
 };
 
-const renderButton = (value: [string, Statistics | null] | undefined) => {
+const renderButton = (value: [string, TargetStatistics | null] | undefined) => {
   if (value === undefined) return <Box p={3} />;
   const [date, stats] = value;
   return (
-    <Tooltip label={<Box textAlign="center">{date}<br/>{`${stats?.count ?? 0} trip${stats?.count === 1 ? '' : 's'}`}</Box>} hasArrow placement="top">
-      <Button size="xs" colorScheme={stats !== null ? 'green' : 'gray'} />
+    <Tooltip label={<Box textAlign="center">{date}<br/>{`${stats?.count ?? 0} trip${stats?.count === 1 ? '' : 's'}`}<br/>{`${((stats?.distance ?? 0) / 1000).toFixed(1)} km`}</Box>} hasArrow placement="top">
+      <Button size="xs" colorScheme={stats !== null ? colorForDistance(stats.distance) : 'gray'} />
     </Tooltip>
   );
 };
 
 interface DailyCalendarContentProps {
-  data: Statistics;
+  data: TargetStatistics;
 }
 
 const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => {
-  const entries = Object.entries(data).sort(([a,], [b,]) => a < b ? -1 : 1) as [string, Statistics][];
+  const entries = Object.entries(data).sort(([a,], [b,]) => a < b ? -1 : 1) as [string, TargetStatistics][];
   const years = entries.map(([date,]) => extractYear(date));
   const now = new Date();
   const [minYear, maxYear] = years.length > 0 ? [years[0], years[years.length - 1]] : [now.getFullYear(), now.getFullYear()];
@@ -66,8 +77,8 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
 
   return (
     <VStack spacing={3}>
-      <Heading as="h2" fontSize={{ base: '2xl' }}>
-        {selectedYear}
+      <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }}>
+        Activity
       </Heading>
       <VStack spacing={1}>
         {calendar.map((rows, i) => (
@@ -79,8 +90,11 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
           </HStack>
         ))}
       </VStack>
-      <HStack>
+      <HStack spacing={6}>
         <IconButton icon={<ArrowBackIcon />} aria-label="Previous" disabled={!canDecrement} onClick={() => canDecrement && setSelectedYear(selectedYear - 1)} />
+        <Heading as="h2" fontSize={{ base: '2xl' }}>
+          {selectedYear}
+        </Heading>
         <IconButton icon={<ArrowForwardIcon />} aria-label="Next" disabled={!canIncrement} onClick={() => canIncrement && setSelectedYear(selectedYear + 1)} />
       </HStack>
     </VStack>
@@ -88,7 +102,7 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
 };
 
 export const DailyCalendar = () => {
-  const { data } = useDataQuery<Statistics>('statisticsDaily');
+  const { data } = useDataQuery<TargetStatistics>('statisticsDaily');
 
   if (!data) {
     return null;

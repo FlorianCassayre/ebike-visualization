@@ -1,20 +1,17 @@
 import {
   Box,
-  Code,
   Container,
   Flex,
-  Heading,
   IconButton,
   Image,
-  Link,
   Spacer,
   useColorMode,
-  Text,
   VStack,
   HStack,
 } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { DailyCalendar } from './viz/DailyCalendar';
+import { Records } from './viz/Records';
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -26,6 +23,7 @@ export const Homepage = () => {
           <Image
             width={"15%"}
             src="/logo.svg"
+            style={{ pointerEvents: 'none' }}
           />
           <Box fontStyle="italic" fontWeight="bold">
             Florian Cassayre
@@ -41,13 +39,8 @@ export const Homepage = () => {
           icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
         />
       </Flex>
-      <VStack spacing={4} mt={3} pt={6} height="80vh">
-        <Heading as="h1" fontSize={{ base: "3xl", md: "4xl" }}>
-          Statistics
-        </Heading>
-        <Text fontSize={"lg"} align="center">
-          My e-bike statistics
-        </Text>
+      <VStack spacing={10} mt={3} pt={6}>
+        <Records />
         <DailyCalendar />
       </VStack>
     </Container>
