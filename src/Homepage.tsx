@@ -14,6 +14,7 @@ import { DailyCalendar } from './viz/DailyCalendar';
 import { Records } from './viz/Records';
 import { MonthlyChart } from './viz/MonthlyChart';
 import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
+import { BsGithub } from 'react-icons/bs';
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -26,23 +27,35 @@ export const Homepage = () => {
             width={"15%"}
             src="/logo.svg"
             style={{ pointerEvents: 'none' }}
-            my={1}
+            my={{ base: 1, md: 0 }}
           />
-          <Box fontStyle="italic" fontWeight="bold">
+          <Box fontWeight="bold">
             Florian Cassayre
           </Box>
         </HStack>
 
         <Spacer />
-        <IconButton
-          rounded="full"
-          aria-label="Toggle color mode"
-          bgColor="transparent"
-          onClick={toggleColorMode}
-          icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-        />
+        <HStack spacing={1}>
+          <IconButton
+            rounded="full"
+            aria-label="GitHub"
+            bgColor="transparent"
+            icon={<BsGithub />}
+            as={'a'}
+            href="https://github.com/FlorianCassayre/ebike-visualization"
+            target="_blank"
+            rel="noopener"
+          />
+          <IconButton
+            rounded="full"
+            aria-label="Toggle color mode"
+            bgColor="transparent"
+            onClick={toggleColorMode}
+            icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+          />
+        </HStack>
       </Flex>
-      <VStack spacing={10} mt={3} pt={6}>
+      <VStack spacing={{ base: 10, lg: 20 }} mt={3} pt={6}>
         <Records />
         <DailyCalendar />
         <DistanceTimeSeries />

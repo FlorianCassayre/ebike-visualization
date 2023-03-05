@@ -1,7 +1,7 @@
 import { useDataQuery } from '../hooks/useDataQuery';
 import React from 'react';
 import { TargetCumulative } from '../types/types';
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Box, Heading, useColorModeValue, useTheme } from '@chakra-ui/react';
 
 interface DistanceTimeSeriesContentProps {
@@ -18,28 +18,22 @@ const DistanceTimeSeriesContent: React.FC<DistanceTimeSeriesContentProps> = ({ d
   const xTicks = seriesData.map(({ name }) => new Date(name)).filter(date => date.getMonth() === 0 && date.getDate() === 1).map(date => date.getTime());
 
   return (
-    <Box>
+    <Box w="100%">
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3} textAlign="center">
         Distance over time
       </Heading>
-      <LineChart
-        width={500}
-        height={300}
-        data={seriesData}
-        margin={{
-          top: 5,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" ticks={xTicks} tickFormatter={formatXTick} />
-        <YAxis unit="km" />
-        <Line type="monotone" dataKey="value" stroke={color} dot={false} />
-      </LineChart>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart
+          data={seriesData}
+          margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" ticks={xTicks} tickFormatter={formatXTick} />
+          <YAxis unit="km" />
+          <Line type="monotone" dataKey="value" stroke={color} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
     </Box>
-
   );
 };
 

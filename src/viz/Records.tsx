@@ -18,7 +18,7 @@ const RecordsContent: React.FC<RecordsContentProps> = ({ data }) => {
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3}>
         All-time statistics
       </Heading>
-      <SimpleGrid columns={[2, null, 3]} gap={6} w="100%" textAlign="center">
+      <SimpleGrid columns={{ base: 2, lg: 3 }} gap={6} w="100%" textAlign="center">
           <Stat>
             <StatLabel>Total distance covered</StatLabel>
             <StatNumber>{(data.totalDistance / 1000).toFixed(0)} km</StatNumber>

@@ -77,20 +77,22 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
   const calendar = makeCalendar(entries, selectedYear);
 
   return (
-    <VStack spacing={3}>
+    <VStack spacing={3} w="100%">
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }}>
         Activity
       </Heading>
-      <VStack spacing={1}>
-        {calendar.map((rows, i) => (
-          <HStack key={i} spacing={1}>
-            <Box width={6} textAlign="center">{WEEKDAYS[i][0]}</Box>
-            {rows.map((value, j) => (
-              <Fragment key={j}>{renderButton(value, now)}</Fragment>
-            ))}
-          </HStack>
-        ))}
-      </VStack>
+      <Box w='100%' overflow={{ base: 'auto', '2xl': 'visible' }}>
+        <VStack spacing={1} maxW='100%' minWidth={{ base: 'min-content', '2xl': '0%' }}>
+          {calendar.map((rows, i) => (
+            <HStack key={i} spacing={1}>
+              <Box width={6} textAlign="center">{WEEKDAYS[i][0]}</Box>
+              {rows.map((value, j) => (
+                <Fragment key={j}>{renderButton(value, now)}</Fragment>
+              ))}
+            </HStack>
+          ))}
+        </VStack>
+      </Box>
       <HStack spacing={6}>
         <IconButton icon={<ArrowBackIcon />} aria-label="Previous" disabled={!canDecrement} onClick={() => canDecrement && setSelectedYear(selectedYear - 1)} />
         <Heading as="h2" fontSize={{ base: '2xl' }}>
