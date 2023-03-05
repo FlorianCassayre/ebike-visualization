@@ -1,3 +1,10 @@
+export interface Data {
+  statisticsDaily: TargetStatistics;
+  statisticsMonthly: TargetStatistics;
+  records: TargetRecords;
+  cumulativeDistance: TargetCumulative;
+}
+
 export interface TargetStatistics {
   count: number;
   distance: number;
@@ -11,3 +18,5 @@ export interface TargetRecords {
   totalCalories: number;
   totalOperationTime: number;
 }
+
+export type TargetCumulative = [string, number][];

@@ -3,6 +3,7 @@
   "name": "ebike-visualization",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": false,
   "dependencies": {
     "@chakra-ui/icons": "^2.0.17",
     "@chakra-ui/react": "^2.5.1",
@@ -14,8 +15,10 @@
     "framer-motion": "^10.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.8.0",
     "react-query": "^3.39.3",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "recharts": "^2.4.3"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -23,7 +26,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "download": "ts-node-esm -r dotenv/config scripts/download.ts",
-    "compile": "ts-node-esm scripts/compile.ts"
+    "compile": "ts-node-esm scripts/compile.ts",
+    "download-compile": "npm run download && npm run compile"
   },
   "eslintConfig": {
     "extends": [

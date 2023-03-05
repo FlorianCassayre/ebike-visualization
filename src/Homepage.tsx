@@ -12,6 +12,8 @@ import {
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
 import { DailyCalendar } from './viz/DailyCalendar';
 import { Records } from './viz/Records';
+import { MonthlyChart } from './viz/MonthlyChart';
+import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -24,6 +26,7 @@ export const Homepage = () => {
             width={"15%"}
             src="/logo.svg"
             style={{ pointerEvents: 'none' }}
+            my={1}
           />
           <Box fontStyle="italic" fontWeight="bold">
             Florian Cassayre
@@ -42,6 +45,8 @@ export const Homepage = () => {
       <VStack spacing={10} mt={3} pt={6}>
         <Records />
         <DailyCalendar />
+        <DistanceTimeSeries />
+        <MonthlyChart />
       </VStack>
     </Container>
   );

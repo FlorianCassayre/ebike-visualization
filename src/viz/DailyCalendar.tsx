@@ -5,8 +5,6 @@ import React, { Fragment, useState } from 'react';
 import { ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const extractYear = (date: string) => parseInt(date.split('-')[0]);
 
@@ -51,12 +49,14 @@ const makeCalendar = (entries: [string, TargetStatistics][], year: number): ([st
   return transposed;
 };
 
-const renderButton = (value: [string, TargetStatistics | null] | undefined) => {
+const renderButton = (value: [string, TargetStatistics | null] | undefined, now: Date) => {
   if (value === undefined) return <Box p={3} />;
   const [date, stats] = value;
+  const dateObj = new Date(date);
+  const isNow = dateObj.getFullYear() === now.getFullYear() && dateObj.getMonth() === now.getMonth() && dateObj.getDate() === now.getDate();
   return (
     <Tooltip label={<Box textAlign="center">{date}<br/>{`${stats?.count ?? 0} trip${stats?.count === 1 ? '' : 's'}`}<br/>{`${((stats?.distance ?? 0) / 1000).toFixed(1)} km`}</Box>} hasArrow placement="top">
-      <Button size="xs" colorScheme={stats !== null ? colorForDistance(stats.distance) : 'gray'} />
+      <Button size="xs" colorScheme={stats !== null ? colorForDistance(stats.distance) : 'gray'} variant={isNow ? 'outline' : undefined} />
     </Tooltip>
   );
 };
@@ -66,9 +66,9 @@ interface DailyCalendarContentProps {
 }
 
 const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => {
+  const now = new Date();
   const entries = Object.entries(data).sort(([a,], [b,]) => a < b ? -1 : 1) as [string, TargetStatistics][];
   const years = entries.map(([date,]) => extractYear(date));
-  const now = new Date();
   const [minYear, maxYear] = years.length > 0 ? [years[0], years[years.length - 1]] : [now.getFullYear(), now.getFullYear()];
 
   const [selectedYear, setSelectedYear] = useState(maxYear);
@@ -86,7 +86,7 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
           <HStack key={i} spacing={1}>
             <Box width={6} textAlign="center">{WEEKDAYS[i][0]}</Box>
             {rows.map((value, j) => (
-              <Fragment key={j}>{renderButton(value)}</Fragment>
+              <Fragment key={j}>{renderButton(value, now)}</Fragment>
             ))}
           </HStack>
         ))}
@@ -103,7 +103,7 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
 };
 
 export const DailyCalendar = () => {
-  const { data } = useDataQuery<TargetStatistics>('statisticsDaily');
+  const { data } = useDataQuery('statisticsDaily');
 
   if (!data) {
     return null;

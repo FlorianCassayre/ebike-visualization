@@ -40,7 +40,7 @@ const RecordsContent: React.FC<RecordsContentProps> = ({ data }) => {
             <StatNumber>{data.tripsCount}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total energy spent</StatLabel>
+            <StatLabel>Total Calories spent</StatLabel>
             <StatNumber>{data.totalCalories} kcal</StatNumber>
           </Stat>
           <Stat>
@@ -53,7 +53,7 @@ const RecordsContent: React.FC<RecordsContentProps> = ({ data }) => {
 };
 
 export const Records: React.FC = () => {
-  const { data } = useDataQuery<TargetRecords>('records')
+  const { data } = useDataQuery('records')
   if (!data) return null;
 
   return <RecordsContent data={data} />;
