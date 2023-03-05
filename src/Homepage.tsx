@@ -25,7 +25,7 @@ export const Homepage = () => {
         <HStack spacing={4}>
           <Image
             width={"15%"}
-            src="/logo.svg"
+            src="/icon.svg"
             style={{ pointerEvents: 'none' }}
             my={{ base: 1, md: 0 }}
           />

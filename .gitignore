@@ -8,3 +8,7 @@
 *.iml
 /data
 /public/data/*.json
+/public/android-chrome-*.png
+/public/apple-touch-icon.png
+/public/favicon.ico
+/public/manifest.webmanifest

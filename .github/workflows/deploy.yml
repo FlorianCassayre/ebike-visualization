@@ -17,6 +17,8 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm ci
+      - name: Generate favicons
+        run: npm run favicons
       - name: Build
         run: npm run build
       - name: Deploy
