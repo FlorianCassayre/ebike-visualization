@@ -27,7 +27,7 @@ export const Homepage = () => {
             width={"15%"}
             src="/icon.svg"
             style={{ pointerEvents: 'none' }}
-            my={{ base: 1, md: 0 }}
+            my={{ base: 3, md: 0 }}
           />
           <Box fontWeight="bold">
             Florian Cassayre
