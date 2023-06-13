@@ -14,6 +14,7 @@ import { DailyCalendar } from './viz/DailyCalendar';
 import { Records } from './viz/Records';
 import { MonthlyChart } from './viz/MonthlyChart';
 import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
+import { CadenceDistribution } from './viz/CadenceDistribution';
 import { BsGithub } from 'react-icons/bs';
 
 export const Homepage = () => {
@@ -60,6 +61,7 @@ export const Homepage = () => {
         <DailyCalendar />
         <DistanceTimeSeries />
         <MonthlyChart />
+        <CadenceDistribution />
       </VStack>
     </Container>
   );

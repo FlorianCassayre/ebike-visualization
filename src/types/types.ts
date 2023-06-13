@@ -3,6 +3,7 @@ export interface Data {
   statisticsMonthly: TargetStatistics;
   records: TargetRecords;
   cumulativeDistance: TargetCumulative;
+  cadence: TargetBuckets;
 }
 
 export interface TargetStatistics {
@@ -20,3 +21,5 @@ export interface TargetRecords {
 }
 
 export type TargetCumulative = [string, number][];
+
+export type TargetBuckets = [number, number][];

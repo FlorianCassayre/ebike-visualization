@@ -23,6 +23,7 @@ const writeTargets = (targets: Record<string, object>) => {
 };
 
 const sum = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => a + b) : 0;
+const min = (array: number[]): number => array.length > 0 ? Math.min(...array) : 0;
 const max = (array: number[]): number => array.length > 0 ? Math.max(...array) : 0;
 
 const timestampToIso = (timestamp: string) => new Date(parseInt(timestamp)).toLocaleDateString(LOCALE, { timeZone: TIMEZONE }).split('/').reverse().join('-');
@@ -93,6 +94,25 @@ const targetRecords = (inputs: ResponseActivityRide[]) => ({
   totalOperationTime: sum(inputs.map(input => parseInt(input.operation_time))),
 });
 
+const targetCadence = (inputs: ResponseActivityRide[]) => {
+  const cadencesRecord: Record<number, number> = {};
+  let total = 0;
+  inputs.forEach(({ cadence }) => cadence.forEach(array => array.map(v => v !== null ? v : -1).forEach(v => {
+    if (cadencesRecord[v] === undefined) {
+      cadencesRecord[v] = 0;
+    }
+    cadencesRecord[v]++;
+    total++;
+  })));
+  const cadenceBuckets = Object.entries(cadencesRecord).map(([key, value]) => [parseInt(key), value]).map(([key]) => key);
+  const mininum = min(cadenceBuckets), maximum = max(cadenceBuckets);
+  const result: [number, number][] = [];
+  for (let i = mininum; i <= maximum; i++) {
+    result.push([i, (cadencesRecord[i] ?? 0) / total]);
+  }
+  return result;
+};
+
 const compile = () => {
   console.log('Loading inputs...');
   const inputs = loadInputs();
@@ -103,6 +123,7 @@ const compile = () => {
     statisticsMonthly: targetStatisticsMonthly(inputs),
     records: targetRecords(inputs),
     cumulativeDistance: targetCumulativeDistance(inputs),
+    cadence: targetCadence(inputs),
   };
 
   console.log('Creating targets...');
