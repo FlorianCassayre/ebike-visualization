@@ -23,8 +23,8 @@ const writeTargets = (targets: Record<string, object>) => {
 };
 
 const sum = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => a + b) : 0;
-const min = (array: number[]): number => array.length > 0 ? Math.min(...array) : 0;
-const max = (array: number[]): number => array.length > 0 ? Math.max(...array) : 0;
+const min = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => Math.min(a, b)) : 0;
+const max = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => Math.max(a, b)) : 0;
 
 const timestampToIso = (timestamp: string) => new Date(parseInt(timestamp)).toLocaleDateString(LOCALE, { timeZone: TIMEZONE }).split('/').reverse().join('-');
 
@@ -113,6 +113,67 @@ const targetCadence = (inputs: ResponseActivityRide[]) => {
   return result;
 };
 
+const targetGears = (inputs: ResponseActivityRide[]) => {
+  const values: number[] = [];
+  inputs.forEach(a => {
+    if (a.cadence.length === a.speed.length) {
+      a.cadence.forEach((cadences, i) => {
+        const speeds = a.speed[i];
+        if (cadences.length === speeds.length) {
+          cadences.forEach((cadence, j) => {
+            const speed = speeds[j];
+            if (cadence !== null && speed !== null && cadence > 0 && speed > 0) {
+              const speedPerCadence = speed / cadence; // km/h / R/min = m/1000 / R/60
+              const metersPerRotation = speedPerCadence * 1000 / 60; // m/R
+              values.push(metersPerRotation);
+            }
+          });
+        }
+      })
+    }
+  });
+  const step = 0.05;
+  const ratiosRecord: Record<number, number> = {};
+  values.forEach(value => {
+    const key = Math.round(value / step);
+    if (ratiosRecord[key] === undefined) {
+      ratiosRecord[key] = 0;
+    }
+    ratiosRecord[key]++;
+  });
+  const minimum = Math.round(min(values) / step), maximum = Math.round(max(values) / step);
+  const result: [number, number][] = [];
+  for (let i = minimum; i <= maximum; i++) {
+    const bucket = i * step;
+    const value = ratiosRecord[i] ?? 0;
+    result.push([bucket, value]);
+  }
+  const radius = 0.24, radiusSlope = 0.2;
+  const radiusK = Math.ceil(radius / step), radiusSlopeK = Math.ceil(radiusSlope / step);
+  const means: number[] = [];
+  while (true) {
+    let localOptimum: number | undefined;
+    for (let i = 0; i < result.length; i++) {
+      const isDistinct = means.every(j => Math.abs(j - i) >= radiusK)
+      if (isDistinct && (localOptimum === undefined || result[localOptimum][1] < result[i][1])) {
+        localOptimum = i;
+      }
+    }
+    if (localOptimum !== undefined
+      && (localOptimum < radiusSlopeK || result[localOptimum - radiusSlopeK][1] < result[localOptimum][1])
+      && (localOptimum + radiusSlopeK >= result.length || result[localOptimum + radiusSlopeK][1] < result[localOptimum][1])) {
+      means.push(localOptimum);
+    } else {
+      break;
+    }
+    if (means.length > 20) {
+      throw new Error();
+    }
+  }
+  const gears = means.sort();
+  return { values: result, gears };
+};
+
 const compile = () => {
   console.log('Loading inputs...');
   const inputs = loadInputs();
@@ -124,6 +185,7 @@ const compile = () => {
     records: targetRecords(inputs),
     cumulativeDistance: targetCumulativeDistance(inputs),
     cadence: targetCadence(inputs),
+    gears: targetGears(inputs),
   };
 
   console.log('Creating targets...');

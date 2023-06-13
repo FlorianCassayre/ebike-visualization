@@ -4,6 +4,7 @@ export interface Data {
   records: TargetRecords;
   cumulativeDistance: TargetCumulative;
   cadence: TargetBuckets;
+  gears: TargetGears;
 }
 
 export interface TargetStatistics {
@@ -23,3 +24,8 @@ export interface TargetRecords {
 export type TargetCumulative = [string, number][];
 
 export type TargetBuckets = [number, number][];
+
+export type TargetGears = {
+  values: TargetBuckets;
+  gears: number[];
+};

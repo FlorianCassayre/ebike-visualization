@@ -16,6 +16,7 @@ import { MonthlyChart } from './viz/MonthlyChart';
 import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
 import { CadenceDistribution } from './viz/CadenceDistribution';
 import { BsGithub } from 'react-icons/bs';
+import { GearDistribution } from './viz/GearDistribution';
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -62,6 +63,7 @@ export const Homepage = () => {
         <DistanceTimeSeries />
         <MonthlyChart />
         <CadenceDistribution />
+        <GearDistribution />
       </VStack>
     </Container>
   );
