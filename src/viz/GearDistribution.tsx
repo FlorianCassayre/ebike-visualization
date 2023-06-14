@@ -23,7 +23,7 @@ const GearDistributionContent: React.FC<GearDistributionContentProps> = ({ data:
   return (
     <Box w="100%">
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3} textAlign="center">
-        Gears
+        Distance per revolution
       </Heading>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart

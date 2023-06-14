@@ -148,30 +148,58 @@ const targetGears = (inputs: ResponseActivityRide[]) => {
     const value = ratiosRecord[i] ?? 0;
     result.push([bucket, value]);
   }
-  const radius = 0.24, radiusSlope = 0.2;
-  const radiusK = Math.ceil(radius / step), radiusSlopeK = Math.ceil(radiusSlope / step);
+  const slopes: number[] = [];
+  for (let i = 0; i < result.length - 1; i++) {
+    const dy = result[i + 1][1] - result[i][1];
+    const d = dy / step;
+    slopes.push(d);
+  }
+  const radius = 5, decrease = 0.75, maxRatio = 10;
   const means: number[] = [];
-  while (true) {
-    let localOptimum: number | undefined;
-    for (let i = 0; i < result.length; i++) {
-      const isDistinct = means.every(j => Math.abs(j - i) >= radiusK)
-      if (isDistinct && (localOptimum === undefined || result[localOptimum][1] < result[i][1])) {
-        localOptimum = i;
-      }
-    }
-    if (localOptimum !== undefined
-      && (localOptimum < radiusSlopeK || result[localOptimum - radiusSlopeK][1] < result[localOptimum][1])
-      && (localOptimum + radiusSlopeK >= result.length || result[localOptimum + radiusSlopeK][1] < result[localOptimum][1])) {
-      means.push(localOptimum);
-    } else {
-      break;
-    }
-    if (means.length > 20) {
-      throw new Error();
+  for (let i = 0; i < slopes.length - 1; i++) {
+    if (slopes[i] > 0 && slopes[i + 1] < 0
+      && (result[i + 1 - radius] === undefined || result[i + 1 - radius][1] < decrease * result[i + 1][1])
+      && (result[i + 1 + radius] === undefined || result[i + 1 + radius][1] < decrease * result[i + 1][1])
+      && result[i + 1][0] < maxRatio) {
+      means.push(i + 1);
     }
   }
+  if (means.length > 20) {
+    throw new Error();
+  }
+  const classifiedGears: number[] = [];
+  const closestTo = (i: number): [number, number][] => means.map<[number, number]>((mean, id) => [id, Math.abs(i - mean)]).sort(([, a], [, b]) => a - b);
+  for (let i = 0; i < result.length; i++) {
+    const closest = closestTo(i)[0][0];
+    classifiedGears.push(closest);
+  }
+  const classifiedGearsClean: (number | null)[] = [];
+  const maxRadiusSymmetry = 1.2;
+  for (let i = 0; i < result.length; i++) {
+    const closest = closestTo(i);
+    if (closest[0][0] === classifiedGears[i] && ((i <= means[classifiedGears[i]]) === (i <= means[closest[1][0]])) && closest[1][1] < closest[0][1] * 2 * maxRadiusSymmetry) {
+      classifiedGearsClean.push(null);
+    } else {
+      classifiedGearsClean.push(classifiedGears[i]);
+    }
+  }
+  let total = 0;
+  const gearsCounts: Record<number, number> = {};
+  for (let i = 0; i < result.length; i++) {
+    const gear = classifiedGearsClean[i];
+    if (gear !== null) {
+      const key = means[gear];
+      if (gearsCounts[key] === undefined) {
+        gearsCounts[key] = 0;
+      }
+      const value = result[i][1];
+      gearsCounts[key] += value;
+      total += value;
+    }
+  }
+  const gearDistribution = means.map(key => [key, result[key][0], (gearsCounts[key] ?? 0) / total] as const);
   const gears = means.sort();
-  return { values: result, gears };
+  return { values: result, gears, gearDistribution };
 };
 
 const compile = () => {
