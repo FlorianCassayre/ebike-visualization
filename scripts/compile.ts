@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { ResponseActivityRide } from 'ebike-connect-js';
+import * as _ from 'radash';
 
 export const LOCALE = 'fr-FR';
 export const TIMEZONE = 'Europe/Paris';
@@ -8,11 +9,13 @@ const INPUT_DIRECTORY = 'data';
 const OUTPUT_DIRECTORY = 'public/data';
 
 const loadInputs = () =>
-  fs.readdirSync(INPUT_DIRECTORY)
-    .sort()
-    .map(filename => fs.readFileSync(`${INPUT_DIRECTORY}/${filename}`, { encoding: 'utf-8' }))
-    .map(input => JSON.parse(input) as ResponseActivityRide)
-    .sort((a, b) => parseInt(a.start_time) - parseInt(b.start_time));
+  _.sort(
+    fs.readdirSync(INPUT_DIRECTORY)
+      .sort()
+      .map(filename => fs.readFileSync(`${INPUT_DIRECTORY}/${filename}`, { encoding: 'utf-8' }))
+      .map(input => JSON.parse(input) as ResponseActivityRide),
+    a => parseInt(a.start_time)
+  );
 
 const writeTargets = (targets: Record<string, object>) => {
   Object.entries(targets).forEach(([name, data]) => {
@@ -22,30 +25,18 @@ const writeTargets = (targets: Record<string, object>) => {
   });
 };
 
-const sum = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => a + b) : 0;
-const min = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => Math.min(a, b)) : 0;
-const max = (array: number[]): number => array.length > 0 ? array.reduce((a, b) => Math.max(a, b)) : 0;
-
 const timestampToIso = (timestamp: string) => new Date(parseInt(timestamp)).toLocaleDateString(LOCALE, { timeZone: TIMEZONE }).split('/').reverse().join('-');
 
 const reduceInputStatistics = (data: ResponseActivityRide[]) => ({
   count: data.length,
-  distance: sum(data.map(d => d.total_distance)),
+  distance: _.sum(data, d => d.total_distance),
 });
 
-const groupStatistics = (inputs: ResponseActivityRide[], groupBy: (ride: ResponseActivityRide) => string) => {
-  const buckets: Record<string, ResponseActivityRide[]> = {};
-  inputs.forEach(input => {
-    const key = groupBy(input);
-    if (buckets[key] === undefined) {
-      buckets[key] = [];
-    }
-    buckets[key].push(input);
-  });
-  return Object.fromEntries(Object.entries(buckets)
-    .sort(([a,], [b,]) => a < b ? -1 : 1)
-    .map(([key, value]) => [key, reduceInputStatistics(value)]));
-};
+const groupStatistics = (inputs: ResponseActivityRide[], groupBy: (ride: ResponseActivityRide) => string) =>
+  Object.fromEntries(
+    _.alphabetical(Object.entries(_.group(inputs, groupBy)), ([a]) => a)
+      .map(([key, value]) => [key, reduceInputStatistics(value!)])
+  );
 
 const targetStatisticsDaily = (inputs: ResponseActivityRide[]) =>
   groupStatistics(inputs, input => timestampToIso(input.start_time));
@@ -86,74 +77,45 @@ const targetCumulativeDistance = (inputs: ResponseActivityRide[]) => {
 };
 
 const targetRecords = (inputs: ResponseActivityRide[]) => ({
-  totalDistance: sum(inputs.map(input => input.total_distance)),
-  maxSpeed: max(inputs.map(input => input.max_speed)),
-  totalAltitudeGain: sum(inputs.map(input => input.elevation_gain)),
+  totalDistance: _.sum(inputs, input => input.total_distance),
+  maxSpeed: _.max(inputs.map(input => input.max_speed)) ?? 0,
+  totalAltitudeGain: _.sum(inputs, input => input.elevation_gain),
   tripsCount: inputs.length,
-  totalCalories: sum(inputs.map(input => input.calories)),
-  totalOperationTime: sum(inputs.map(input => parseInt(input.operation_time))),
+  totalCalories: _.sum(inputs, input => input.calories),
+  totalOperationTime: _.sum(inputs, input => parseInt(input.operation_time)),
 });
 
 const targetCadence = (inputs: ResponseActivityRide[]) => {
-  const cadencesRecord: Record<number, number> = {};
-  let total = 0;
-  inputs.forEach(({ cadence }) => cadence.forEach(array => array.map(v => v !== null ? v : -1).forEach(v => {
-    if (cadencesRecord[v] === undefined) {
-      cadencesRecord[v] = 0;
-    }
-    cadencesRecord[v]++;
-    total++;
-  })));
-  const cadenceBuckets = Object.entries(cadencesRecord).map(([key, value]) => [parseInt(key), value]).map(([key]) => key);
-  const mininum = min(cadenceBuckets), maximum = max(cadenceBuckets);
-  const result: [number, number][] = [];
-  for (let i = mininum; i <= maximum; i++) {
-    result.push([i, (cadencesRecord[i] ?? 0) / total]);
-  }
-  return result;
+  const values = inputs.flatMap(({ cadence }) => cadence.flatMap(array => array.map(v => v !== null ? v : -1)));
+  const cadencesRecord = _.counting(values, v => v);
+  const cadenceBuckets = _.keys(cadencesRecord).map(key => parseInt(key));
+  return _.list(_.min(cadenceBuckets) ?? 0, _.max(cadenceBuckets) ?? 0, i => [i, (cadencesRecord[i] ?? 0) / values.length]);
 };
 
 const targetGears = (inputs: ResponseActivityRide[]) => {
-  const values: number[] = [];
-  inputs.forEach(a => {
-    if (a.cadence.length === a.speed.length) {
-      a.cadence.forEach((cadences, i) => {
-        const speeds = a.speed[i];
-        if (cadences.length === speeds.length) {
-          cadences.forEach((cadence, j) => {
-            const speed = speeds[j];
-            if (cadence !== null && speed !== null && cadence > 0 && speed > 0) {
-              const speedPerCadence = speed / cadence; // km/h / R/min = m/1000 / R/60
-              const metersPerRotation = speedPerCadence * 1000 / 60; // m/R
-              values.push(metersPerRotation);
-            }
-          });
-        }
-      })
-    }
-  });
+  const values: number[] = inputs
+    .filter(a => a.cadence.length === a.speed.length)
+    .flatMap(a =>
+      _.zip(a.cadence, a.speed)
+        .filter(([cadences, speeds]) => cadences.length === speeds.length)
+        .flatMap(([cadences, speeds]) =>
+          _.zip(cadences, speeds)
+            .filter(([cadence, speed]) => cadence !== null && speed !== null && cadence > 0 && speed > 0)
+            .map(([cadence, speed]) => {
+              const speedPerCadence = speed / cadence!; // km/h / R/min = m/1000 / R/60
+              return speedPerCadence * 1000 / 60; // m/R
+            })
+        )
+    );
   const step = 0.05;
-  const ratiosRecord: Record<number, number> = {};
-  values.forEach(value => {
-    const key = Math.round(value / step);
-    if (ratiosRecord[key] === undefined) {
-      ratiosRecord[key] = 0;
-    }
-    ratiosRecord[key]++;
-  });
-  const minimum = Math.round(min(values) / step), maximum = Math.round(max(values) / step);
-  const result: [number, number][] = [];
-  for (let i = minimum; i <= maximum; i++) {
+  const ratiosRecord = _.counting(values, value => Math.round(value / step));
+  const minimum = Math.round((_.min(values) ?? 0) / step), maximum = Math.round((_.max(values) ?? 0) / step);
+  const result = _.list(minimum, maximum, i => {
     const bucket = i * step;
     const value = ratiosRecord[i] ?? 0;
-    result.push([bucket, value]);
-  }
-  const slopes: number[] = [];
-  for (let i = 0; i < result.length - 1; i++) {
-    const dy = result[i + 1][1] - result[i][1];
-    const d = dy / step;
-    slopes.push(d);
-  }
+    return [bucket, value];
+  });
+  const slopes = _.zip(result.slice(0, result.length - 1), result.slice(1)).map(([[, v0], [, v1]]) => (v1 - v0) / step)
   const radius = 5, decrease = 0.75, maxRatio = 10;
   const means: number[] = [];
   for (let i = 0; i < slopes.length - 1; i++) {
