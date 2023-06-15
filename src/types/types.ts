@@ -29,4 +29,5 @@ export type TargetGears = {
   values: TargetBuckets;
   gears: number[];
   gearDistribution: [number, number, number][];
+  speedGearDistribution: { speed: number, values: number[] }[];
 };

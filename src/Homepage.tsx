@@ -18,6 +18,7 @@ import { CadenceDistribution } from './viz/CadenceDistribution';
 import { BsGithub } from 'react-icons/bs';
 import { GearDistribution } from './viz/GearDistribution';
 import { GearUsage } from './viz/GearUsage';
+import { SpeedGearDistribution } from './viz/SpeedGearDistribution';
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
@@ -66,6 +67,7 @@ export const Homepage = () => {
         <CadenceDistribution />
         <GearDistribution />
         <GearUsage />
+        <SpeedGearDistribution />
       </VStack>
     </Container>
   );

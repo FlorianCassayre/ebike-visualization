@@ -93,7 +93,7 @@ const targetCadence = (inputs: ResponseActivityRide[]) => {
 };
 
 const targetGears = (inputs: ResponseActivityRide[]) => {
-  const values: number[] = inputs
+  const values = inputs
     .filter(a => a.cadence.length === a.speed.length)
     .flatMap(a =>
       _.zip(a.cadence, a.speed)
@@ -103,13 +103,15 @@ const targetGears = (inputs: ResponseActivityRide[]) => {
             .filter(([cadence, speed]) => cadence !== null && speed !== null && cadence > 0 && speed > 0)
             .map(([cadence, speed]) => {
               const speedPerCadence = speed / cadence!; // km/h / R/min = m/1000 / R/60
-              return speedPerCadence * 1000 / 60; // m/R
+              const metersPerRotation = speedPerCadence * 1000 / 60; // m/R
+              return { metersPerRotation, speed, cadence: cadence! };
             })
         )
     );
+  const metersPerRotations = values.map(o => o.metersPerRotation);
   const step = 0.05;
-  const ratiosRecord = _.counting(values, value => Math.round(value / step));
-  const minimum = Math.round((_.min(values) ?? 0) / step), maximum = Math.round((_.max(values) ?? 0) / step);
+  const ratiosRecord = _.counting(metersPerRotations, value => Math.round(value / step));
+  const minimum = Math.round((_.min(metersPerRotations) ?? 0) / step), maximum = Math.round((_.max(metersPerRotations) ?? 0) / step);
   const result = _.list(minimum, maximum, i => {
     const bucket = i * step;
     const value = ratiosRecord[i] ?? 0;
@@ -161,7 +163,19 @@ const targetGears = (inputs: ResponseActivityRide[]) => {
   }
   const gearDistribution = means.map(key => [key, result[key][0], (gearsCounts[key] ?? 0) / total] as const);
   const gears = means.sort();
-  return { values: result, gears, gearDistribution };
+  const speedStep = 0.5;
+  const speedGroups = _.group(values, o => Math.round(o.speed / speedStep));
+  const speedKeys = _.keys(speedGroups).map(v => parseInt(v));
+  const speedGearDistribution =
+    _.list(_.min(speedKeys) ?? 0, _.max(speedKeys) ?? 0, speedKey => [speedKey * speedStep, speedGroups[speedKey] ?? []] satisfies [number, typeof values])
+      .map(([speed, items]) => {
+        const gearsGroups = _.counting(items, o => classifiedGearsClean[Math.round(o.metersPerRotation / step) - minimum] ?? -1);
+        const gearsVector = _.list(gears.length - 1).map(i => gearsGroups[i] ?? 0);
+        const totalInGroup = _.sum(gearsVector);
+        const normalizedVector = gearsVector.map((v, i) => totalInGroup !== 0 ? v / totalInGroup : (i === gears.length - 1 ? 1 : 0));
+        return { speed: speed, values: normalizedVector };
+      });
+  return { values: result, gears, gearDistribution, speedGearDistribution };
 };
 
 const compile = () => {
