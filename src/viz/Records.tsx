@@ -6,6 +6,7 @@ import {
   Stat,
   StatLabel,
   StatNumber, VStack,
+  Container,
 } from '@chakra-ui/react';
 
 interface RecordsContentProps {
@@ -14,41 +15,43 @@ interface RecordsContentProps {
 
 const RecordsContent: React.FC<RecordsContentProps> = ({ data }) => {
   return (
-    <VStack w="100%">
-      <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3}>
-        All-time statistics
-      </Heading>
-      <SimpleGrid columns={{ base: 2, lg: 3 }} gap={6} w="100%" textAlign="center">
-          <Stat>
-            <StatLabel>Total distance covered</StatLabel>
-            <StatNumber>{(data.totalDistance / 1000).toFixed(0)} km</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Maximum speed reached</StatLabel>
-            <StatNumber>{data.maxSpeed.toFixed(1)} km/h</StatNumber>
-            {/*<StatHelpText>
-          <StatArrow type='increase' />
-          23.36%
-        </StatHelpText>*/}
-          </Stat>
-          <Stat>
-            <StatLabel>Total altitude gained</StatLabel>
-            <StatNumber>{(data.totalAltitudeGain / 1000).toFixed(1)} km</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Trips</StatLabel>
-            <StatNumber>{data.tripsCount}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total Calories spent</StatLabel>
-            <StatNumber>{data.totalCalories} kcal</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total time cycling</StatLabel>
-            <StatNumber>{Math.floor(data.totalOperationTime / (1000 * 3600))} hours</StatNumber>
-          </Stat>
-        </SimpleGrid>
-    </VStack>
+    <Container maxW="container.sm">
+      <VStack w="100%">
+        <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3}>
+          All-time statistics
+        </Heading>
+        <SimpleGrid columns={{ base: 2, lg: 3 }} gap={6} w="100%" textAlign="center">
+            <Stat>
+              <StatLabel>Total distance covered</StatLabel>
+              <StatNumber>{(data.totalDistance / 1000).toFixed(0)} km</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Maximum speed reached</StatLabel>
+              <StatNumber>{data.maxSpeed.toFixed(1)} km/h</StatNumber>
+              {/*<StatHelpText>
+            <StatArrow type='increase' />
+            23.36%
+          </StatHelpText>*/}
+            </Stat>
+            <Stat>
+              <StatLabel>Total altitude gained</StatLabel>
+              <StatNumber>{(data.totalAltitudeGain / 1000).toFixed(1)} km</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Trips</StatLabel>
+              <StatNumber>{data.tripsCount}</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Total Calories spent</StatLabel>
+              <StatNumber>{data.totalCalories} kcal</StatNumber>
+            </Stat>
+            <Stat>
+              <StatLabel>Total time cycling</StatLabel>
+              <StatNumber>{Math.floor(data.totalOperationTime / (1000 * 3600))} hours</StatNumber>
+            </Stat>
+          </SimpleGrid>
+      </VStack>
+    </Container>
   );
 };
 

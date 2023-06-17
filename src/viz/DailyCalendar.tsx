@@ -81,8 +81,8 @@ const DailyCalendarContent: React.FC<DailyCalendarContentProps> = ({ data }) => 
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }}>
         Activity
       </Heading>
-      <Box w='100%' overflow={{ base: 'auto', '2xl': 'visible' }}>
-        <VStack spacing={1} maxW='100%' minWidth={{ base: 'min-content', '2xl': '0%' }}>
+      <Box w="100%" overflow={{ base: 'auto', '2xl': 'visible' }}>
+        <VStack spacing={1} maxW="100%" minWidth={{ base: 'min-content', '2xl': '0%' }}>
           {calendar.map((rows, i) => (
             <HStack key={i} spacing={1}>
               <Box width={6} textAlign="center">{WEEKDAYS[i][0]}</Box>

@@ -6,25 +6,22 @@ import {
   Image,
   Spacer,
   useColorMode,
-  VStack,
   HStack,
+  Spinner,
+  Center,
 } from '@chakra-ui/react';
 import { MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { DailyCalendar } from './viz/DailyCalendar';
-import { Records } from './viz/Records';
-import { MonthlyChart } from './viz/MonthlyChart';
-import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
-import { CadenceDistribution } from './viz/CadenceDistribution';
 import { BsGithub } from 'react-icons/bs';
-import { GearDistribution } from './viz/GearDistribution';
-import { GearUsage } from './viz/GearUsage';
-import { SpeedGearDistribution } from './viz/SpeedGearDistribution';
+import { lazily } from 'react-lazily';
+import React, { Suspense } from 'react';
+
+const { Visualizations } = lazily(() => import('./Visualizations'));
 
 export const Homepage = () => {
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
-    <Container maxW="container.sm" my={{ base: 0, md: 8 }}>
+    <Container maxW="container.xl" my={{ base: 0, md: 8 }}>
       <Flex alignItems="center">
         <HStack spacing={4}>
           <Image
@@ -59,16 +56,16 @@ export const Homepage = () => {
           />
         </HStack>
       </Flex>
-      <VStack spacing={{ base: 10, lg: 20 }} mt={3} pt={6}>
-        <Records />
-        <DailyCalendar />
-        <DistanceTimeSeries />
-        <MonthlyChart />
-        <CadenceDistribution />
-        <GearDistribution />
-        <GearUsage />
-        <SpeedGearDistribution />
-      </VStack>
+
+      <Suspense
+        fallback={
+          <Center>
+            <Spinner size="xl" mt={16} mb={8} />
+          </Center>
+        }
+      >
+        <Visualizations />
+      </Suspense>
     </Container>
   );
 };
