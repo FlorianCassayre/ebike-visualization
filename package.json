@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
+    "dotenv": "^16.3.1",
     "ebike-connect-js": "^0.1.1",
     "favicons": "^7.1.0",
     "ts-node": "^10.9.1",
