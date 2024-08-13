@@ -25,9 +25,9 @@
     "start": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "favicons": "ts-node-esm scripts/favicons.ts",
-    "download": "ts-node-esm -r dotenv/config scripts/download.ts",
-    "compile": "ts-node-esm scripts/compile.ts",
+    "favicons": "tsx scripts/favicons.ts",
+    "download": "tsx --env-file .env scripts/download.ts",
+    "compile": "tsx scripts/compile.ts",
     "download-compile": "npm run download && npm run compile"
   },
   "eslintConfig": {
@@ -50,10 +50,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
-    "dotenv": "^16.3.1",
     "ebike-connect-js": "^0.1.1",
     "favicons": "^7.1.0",
-    "ts-node": "^10.9.1",
+    "tsx": "^4.17.0",
     "typescript": "^4.9.5",
     "vite": "^4.3.9"
   }
