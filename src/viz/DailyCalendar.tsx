@@ -3,6 +3,7 @@ import { useDataQuery } from '../hooks/useDataQuery';
 import { TargetStatistics } from '../types/types';
 import React, { Fragment, useState } from 'react';
 import { ArrowBackIcon, ArrowForwardIcon } from '@chakra-ui/icons';
+import { MISSING_DATA } from '../config';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -54,9 +55,10 @@ const renderButton = (value: [string, TargetStatistics | null] | undefined, now:
   const [date, stats] = value;
   const dateObj = new Date(date);
   const isNow = dateObj.getFullYear() === now.getFullYear() && dateObj.getMonth() === now.getMonth() && dateObj.getDate() === now.getDate();
+  const isMissingData = MISSING_DATA.some(({ range: { start, end } }) => start.getTime() <= dateObj.getTime() && dateObj.getTime() < end.getTime());
   return (
-    <Tooltip label={<Box textAlign="center">{date}<br/>{`${stats?.count ?? 0} trip${stats?.count === 1 ? '' : 's'}`}<br/>{`${((stats?.distance ?? 0) / 1000).toFixed(1)} km`}</Box>} hasArrow placement="top">
-      <Button size="xs" colorScheme={stats !== null ? colorForDistance(stats.distance) : 'gray'} variant={isNow ? 'outline' : undefined} />
+    <Tooltip label={<Box textAlign="center">{date}<br/>{!isMissingData ? <>{`${stats?.count ?? 0} trip${stats?.count === 1 ? '' : 's'}`}<br/>{`${((stats?.distance ?? 0) / 1000).toFixed(1)} km`}</> : 'Missing data'}</Box>} hasArrow placement="top">
+      <Button size="xs" colorScheme={!isMissingData ? (stats !== null ? colorForDistance(stats.distance) : 'gray') : 'red'} variant={isNow || isMissingData ? 'outline' : undefined} />
     </Tooltip>
   );
 };

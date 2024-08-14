@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { ResponseActivityRide } from 'ebike-connect-js';
 import * as _ from 'radash';
+import { MISSING_DATA, MissingDataRange } from '../src/config';
 
 export const LOCALE = 'fr-FR';
 export const TIMEZONE = 'Europe/Paris';
@@ -27,38 +28,56 @@ const writeTargets = (targets: Record<string, object>) => {
 
 const timestampToIso = (timestamp: string) => new Date(parseInt(timestamp)).toLocaleDateString(LOCALE, { timeZone: TIMEZONE }).split('/').reverse().join('-');
 
-const reduceInputStatistics = (data: ResponseActivityRide[]) => ({
+const getMissingDataDays = (data: MissingDataRange[]): (Omit<MissingDataRange, 'range'> & { date: Date })[] =>
+  data.flatMap(({ range: { start, end }, distance, trips, altitude, calories, time }) => {
+    const dates: Date[] = [];
+    const endTimestamp = timestampToIso(String(end.getTime()));
+    let date = timestampToIso(String(start.getTime()));
+    while (date < endTimestamp) {
+      dates.push(new Date(date));
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      date = timestampToIso(String(nextDate.getTime()));
+    }
+    const t = dates.length;
+    return dates.map((d) => ({ date: d, distance: distance / t, trips: trips / t, altitude: altitude / t, calories: calories / t, time: time / t }));
+  });
+
+const reduceInputStatistics = (data: ResponseActivityRide[], missingData: ReturnType<typeof getMissingDataDays>) => ({
   count: data.length,
-  distance: _.sum(data, d => d.total_distance),
+  distance: _.sum(data, d => d.total_distance) + _.sum(missingData, d => d.distance),
 });
 
-const groupStatistics = (inputs: ResponseActivityRide[], groupBy: (ride: ResponseActivityRide) => string) =>
-  Object.fromEntries(
-    _.alphabetical(Object.entries(_.group(inputs, groupBy)), ([a]) => a)
-      .map(([key, value]) => [key, reduceInputStatistics(value!)])
+const groupStatistics = (inputs: ResponseActivityRide[], groupBy: (date: string) => string) => {
+  const grouped = _.group(inputs, ride => groupBy(ride.start_time));
+  const missing = _.group(getMissingDataDays(MISSING_DATA), d => groupBy(String(d.date.getTime())));
+  const sortedKeys = Array.from(new Set([...Object.keys(grouped), ...Object.keys(missing)])).sort();
+  return Object.fromEntries(
+    sortedKeys.map(key => [key, reduceInputStatistics(grouped[key] ?? [], missing[key] ?? [])])
   );
+};
 
 const targetStatisticsDaily = (inputs: ResponseActivityRide[]) =>
-  groupStatistics(inputs, input => timestampToIso(input.start_time));
+  groupStatistics(inputs, date => timestampToIso(date));
 
 const targetStatisticsMonthly = (inputs: ResponseActivityRide[]) =>
-  groupStatistics(inputs, input => timestampToIso(input.start_time).split('-').slice(0, 2).join('-'));
+  groupStatistics(inputs, date => timestampToIso(date).split('-').slice(0, 2).join('-'));
 
 const targetCumulativeDistance = (inputs: ResponseActivityRide[]) => {
+  const daily = Object.entries(targetStatisticsDaily(inputs));
   const array: [string, number][] = [];
-  if (inputs.length === 0) {
+  if (daily.length === 0) {
     return array;
   }
-  inputs.forEach(input => {
-    const key = timestampToIso(input.start_time);
+  daily.forEach(([key, { distance }]) => {
     if (array.length > 0 && array[array.length - 1][0] === key) {
-      array[array.length - 1][1] += input.total_distance;
+      array[array.length - 1][1] += distance;
     } else {
-      array.push([key, (array.length > 0 ? array[array.length - 1][1] : 0) + input.total_distance]);
+      array.push([key, (array.length > 0 ? array[array.length - 1][1] : 0) + distance]);
     }
   });
   const lookupTable: Record<string, number> = Object.fromEntries(array);
-  const [minDate, maxDate] = [timestampToIso(inputs[0].start_time), timestampToIso(inputs[inputs.length - 1].start_time)];
+  const [minDate, maxDate] = [daily[0][0], daily[daily.length - 1][0]];
   let currentDate = minDate;
   const resultArray: [string, number][] = [];
   while (currentDate <= maxDate) {
@@ -77,12 +96,12 @@ const targetCumulativeDistance = (inputs: ResponseActivityRide[]) => {
 };
 
 const targetRecords = (inputs: ResponseActivityRide[]) => ({
-  totalDistance: _.sum(inputs, input => input.total_distance),
+  totalDistance: _.sum(inputs, input => input.total_distance) + _.sum(MISSING_DATA, d => d.distance),
   maxSpeed: _.max(inputs.map(input => input.max_speed)) ?? 0,
-  totalAltitudeGain: _.sum(inputs, input => input.elevation_gain),
-  tripsCount: inputs.length,
-  totalCalories: _.sum(inputs, input => input.calories),
-  totalOperationTime: _.sum(inputs, input => parseInt(input.operation_time)),
+  totalAltitudeGain: _.sum(inputs, input => input.elevation_gain) + _.sum(MISSING_DATA, d => d.altitude),
+  tripsCount: inputs.length + _.sum(MISSING_DATA, d => d.trips),
+  totalCalories: _.sum(inputs, input => input.calories) + _.sum(MISSING_DATA, d => d.calories),
+  totalOperationTime: _.sum(inputs, input => parseInt(input.operation_time)) + _.sum(MISSING_DATA, d => d.time * 60 * 60 * 1000),
 });
 
 const targetCadence = (inputs: ResponseActivityRide[]) => {
@@ -118,13 +137,13 @@ const targetGears = (inputs: ResponseActivityRide[]) => {
     return [bucket, value];
   });
   const slopes = _.zip(result.slice(0, result.length - 1), result.slice(1)).map(([[, v0], [, v1]]) => (v1 - v0) / step)
-  const radius = 5, decrease = 0.75, maxRatio = 10;
+  const radius = 5, decrease = 0.75, minRatio = 2, maxRatio = 10;
   const means: number[] = [];
   for (let i = 0; i < slopes.length - 1; i++) {
     if (slopes[i] > 0 && slopes[i + 1] < 0
       && (result[i + 1 - radius] === undefined || result[i + 1 - radius][1] < decrease * result[i + 1][1])
       && (result[i + 1 + radius] === undefined || result[i + 1 + radius][1] < decrease * result[i + 1][1])
-      && result[i + 1][0] < maxRatio) {
+      && minRatio < result[i + 1][0] && result[i + 1][0] < maxRatio) {
       means.push(i + 1);
     }
   }
