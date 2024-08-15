@@ -57,6 +57,13 @@ const groupStatistics = (inputs: ResponseActivityRide[], groupBy: (date: string)
   );
 };
 
+const groupDistribution = (inputs: ResponseActivityRide[], groupBy: (ride: ResponseActivityRide) => number[], step: number) => {
+  const values = inputs.flatMap(groupBy);
+  const record = _.counting(values, v => Math.round(v / step));
+  const buckets = _.keys(record).map(key => parseInt(key));
+  return _.list(_.min(buckets) ?? 0, _.max(buckets) ?? 0, i => [i * step, (record[i] ?? 0) / values.length]);
+};
+
 const targetStatisticsDaily = (inputs: ResponseActivityRide[]) =>
   groupStatistics(inputs, date => timestampToIso(date));
 
@@ -104,12 +111,14 @@ const targetRecords = (inputs: ResponseActivityRide[]) => ({
   totalOperationTime: _.sum(inputs, input => parseInt(input.operation_time)) + _.sum(MISSING_DATA, d => d.time * 60 * 60 * 1000),
 });
 
-const targetCadence = (inputs: ResponseActivityRide[]) => {
-  const values = inputs.flatMap(({ cadence }) => cadence.flatMap(array => array.map(v => v !== null ? v : -1)));
-  const cadencesRecord = _.counting(values, v => v);
-  const cadenceBuckets = _.keys(cadencesRecord).map(key => parseInt(key));
-  return _.list(_.min(cadenceBuckets) ?? 0, _.max(cadenceBuckets) ?? 0, i => [i, (cadencesRecord[i] ?? 0) / values.length]);
-};
+const targetCadence = (inputs: ResponseActivityRide[]) =>
+  groupDistribution(inputs, ({ cadence }) => cadence.flatMap(array => array.map(v => v !== null ? v : -1)), 1);
+
+const targetSpeed = (inputs: ResponseActivityRide[]) =>
+  groupDistribution(inputs, ({ speed }) => speed.flatMap(array => array.map(v => v !== null ? v : -1)), 1);
+
+const targetPower = (inputs: ResponseActivityRide[]) =>
+  groupDistribution(inputs, ({ power_output }) => power_output.flatMap(array => array.map(v => v !== null ? v : -1)), 5);
 
 const targetGears = (inputs: ResponseActivityRide[]) => {
   const values = inputs
@@ -208,6 +217,8 @@ const compile = () => {
     records: targetRecords(inputs),
     cumulativeDistance: targetCumulativeDistance(inputs),
     cadence: targetCadence(inputs),
+    speed: targetSpeed(inputs),
+    power: targetPower(inputs),
     gears: targetGears(inputs),
   };
 

@@ -17,7 +17,7 @@ const GearUsageContent: React.FC<GearUsageContentProps> = ({ data }) => {
   return (
     <Box w="100%">
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3} textAlign="center">
-        Gears usage
+        Gears
       </Heading>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart

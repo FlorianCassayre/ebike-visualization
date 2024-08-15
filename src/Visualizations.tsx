@@ -4,10 +4,11 @@ import { DailyCalendar } from './viz/DailyCalendar';
 import { DistanceTimeSeries } from './viz/DistanceTimeSeries';
 import { MonthlyChart } from './viz/MonthlyChart';
 import { CadenceDistribution } from './viz/CadenceDistribution';
-import { GearDistribution } from './viz/GearDistribution';
 import { GearUsage } from './viz/GearUsage';
 import { SpeedGearDistribution } from './viz/SpeedGearDistribution';
 import { Grid, GridItem } from '@chakra-ui/react';
+import { SpeedDistribution } from './viz/SpeedDistribution';
+import { PowerDistribution } from './viz/PowerDistribution';
 
 export const Visualizations: React.FC = () => {
   const largeProps = { colSpan: 2 }
@@ -27,10 +28,13 @@ export const Visualizations: React.FC = () => {
         <MonthlyChart />
       </GridItem>
       <GridItem {...smallProps}>
-        <CadenceDistribution />
+        <SpeedDistribution />
       </GridItem>
       <GridItem {...smallProps}>
-        <GearDistribution />
+        <CadenceDistribution />
+      </GridItem>
+      <GridItem {...largeProps}>
+        <PowerDistribution />
       </GridItem>
       <GridItem {...smallProps}>
         <GearUsage />

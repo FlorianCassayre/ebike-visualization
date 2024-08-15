@@ -4,6 +4,8 @@ export interface Data {
   records: TargetRecords;
   cumulativeDistance: TargetCumulative;
   cadence: TargetBuckets;
+  speed: TargetBuckets;
+  power: TargetBuckets;
   gears: TargetGears;
 }
 

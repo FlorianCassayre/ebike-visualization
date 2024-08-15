@@ -22,7 +22,7 @@ const SpeedGearDistributionContent: React.FC<SpeedGearDistributionContentProps> 
   return (
     <Box w="100%">
       <Heading as="h1" fontSize={{ base: "2xl", md: "3xl" }} mb={3} textAlign="center">
-        Speed per gear
+        Gears per speed
       </Heading>
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart
