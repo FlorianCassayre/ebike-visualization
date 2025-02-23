@@ -7,6 +7,7 @@ export interface Data {
   speed: TargetBuckets;
   power: TargetBuckets;
   gears: TargetGears;
+  acceleration: TargetAccelerations;
 }
 
 export interface TargetStatistics {
@@ -27,9 +28,11 @@ export type TargetCumulative = [string, number][];
 
 export type TargetBuckets = [number, number][];
 
-export type TargetGears = {
+export interface TargetGears {
   values: TargetBuckets;
   gears: number[];
   gearDistribution: [number, number, number][];
   speedGearDistribution: { speed: number, values: number[] }[];
-};
+}
+
+export type TargetAccelerations = { speed: number, meanAcceleration: number, stdDevAcceleration: number }[];

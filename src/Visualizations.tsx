@@ -9,6 +9,7 @@ import { SpeedGearDistribution } from './viz/SpeedGearDistribution';
 import { Grid, GridItem } from '@chakra-ui/react';
 import { SpeedDistribution } from './viz/SpeedDistribution';
 import { PowerDistribution } from './viz/PowerDistribution';
+import { SpeedAccelerationChart } from './viz/SpeedAccelerationChart';
 
 export const Visualizations: React.FC = () => {
   const largeProps = { colSpan: 2 }
@@ -35,6 +36,9 @@ export const Visualizations: React.FC = () => {
       </GridItem>
       <GridItem {...largeProps}>
         <PowerDistribution />
+      </GridItem>
+      <GridItem {...largeProps}>
+        <SpeedAccelerationChart />
       </GridItem>
       <GridItem {...smallProps}>
         <GearUsage />

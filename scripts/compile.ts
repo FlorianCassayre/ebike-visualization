@@ -206,6 +206,60 @@ const targetGears = (inputs: ResponseActivityRide[]) => {
   return { values: result, gears, gearDistribution, speedGearDistribution };
 };
 
+const computeMeanStdDev = (values: number[]): { mean: number, stdDev: number } => {
+  const n = values.length;
+  if (n === 0) return { mean: 0, stdDev: 0 };
+  const mean = _.sum(values) / n;
+  const variance = _.sum(values.map(value => (value - mean) ** 2)) / (n - 1);
+  return {
+    mean,
+    stdDev: Math.sqrt(variance)
+  };
+};
+
+
+const targetAcceleration = (inputs: ResponseActivityRide[]) => {
+  const stepRadius = 1;
+  const speedsAndAccelerations: { speed: number, acceleration: number }[] = [];
+  inputs.forEach(input => {
+    const duration = parseInt(input.end_time) - parseInt(input.start_time);
+    if (duration === 0 || input.speed.length !== 1) {
+      return;
+    }
+    const speeds = input.speed[0];
+    if (speeds.length < 2 * stepRadius + 1) {
+      return;
+    }
+    const dtSingleSecond = duration / (1000 * speeds.length); // In seconds
+    if (Math.abs(dtSingleSecond - 1) > 0.05) { // Data points occur every second, we tolerate a 5% error
+      return;
+    }
+    const dt = (2 * stepRadius) * dtSingleSecond;
+    for (let i = stepRadius; i < speeds.length - stepRadius; i++) {
+      const speedBefore = speeds[i - stepRadius], speed = speeds[i], speedAfter = speeds[i + stepRadius];
+      const acceleration = (speedAfter - speedBefore) / dt;
+      speedsAndAccelerations.push({ speed, acceleration: Math.abs(acceleration) });
+    }
+  });
+  //const accelerations = speedsAndAccelerations.map(v => v.acceleration);
+  //const minAcceleration = _.min(accelerations) || 0, maxAcceleration = _.max(accelerations) || 0;
+  const maxSpeed = _.max(speedsAndAccelerations.map(v => v.speed)) || 0;
+  const totalPoints = 50;
+  const speedBuckets: number[][] = _.list(0, totalPoints - 1, () => []);
+  speedsAndAccelerations.forEach(({ speed, acceleration }) => {
+    const bucket = Math.min(Math.floor(totalPoints * speed / maxSpeed), totalPoints - 1);
+    speedBuckets[bucket].push(acceleration);
+  });
+  return _.list(0, totalPoints - 1, bucket => {
+    const { mean, stdDev } = computeMeanStdDev(speedBuckets[bucket]);
+    return {
+      speed: bucket * maxSpeed / totalPoints,
+      meanAcceleration: mean,
+      stdDevAcceleration: stdDev,
+    };
+  });
+};
+
 const compile = () => {
   console.log('Loading inputs...');
   const inputs = loadInputs();
@@ -220,6 +274,7 @@ const compile = () => {
     speed: targetSpeed(inputs),
     power: targetPower(inputs),
     gears: targetGears(inputs),
+    acceleration: targetAcceleration(inputs),
   };
 
   console.log('Creating targets...');
