@@ -1,6 +1,7 @@
 export interface Data {
   statisticsDaily: TargetStatistics;
-  statisticsMonthly: TargetStatistics;
+  statisticsMonthly: Record<string, TargetStatistics>;
+  statisticsWeekly: Record<string, TargetStatisticsAggregated>;
   records: TargetRecords;
   cumulativeDistance: TargetCumulative;
   cadence: TargetBuckets;
@@ -13,6 +14,13 @@ export interface Data {
 export interface TargetStatistics {
   count: number;
   distance: number;
+}
+
+export interface TargetStatisticsAggregated {
+  meanCount: number,
+  stdDevCount: number,
+  meanDistance: number,
+  stdDevDistance: number,
 }
 
 export interface TargetRecords {

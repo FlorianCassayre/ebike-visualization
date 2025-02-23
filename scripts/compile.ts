@@ -70,6 +70,35 @@ const targetStatisticsDaily = (inputs: ResponseActivityRide[]) =>
 const targetStatisticsMonthly = (inputs: ResponseActivityRide[]) =>
   groupStatistics(inputs, date => timestampToIso(date).split('-').slice(0, 2).join('-'));
 
+const WEEKDAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const targetStatisticsWeekly = (inputs: ResponseActivityRide[]) => {
+  const daily = groupStatistics(inputs, date => timestampToIso(date));
+  const dailyDistances: { count: number, distance: number }[][] = _.list(0, WEEKDAYS.length - 1, () => []);
+  Object.entries(daily).forEach(([isoDate, values]) => dailyDistances[(WEEKDAYS.length + new Date(isoDate).getDay() - 1) % WEEKDAYS.length].push(values));
+  const totalWeeks = _.max(dailyDistances.map(array => array.length)) || 0;
+  return Object.fromEntries(WEEKDAYS.map((label, i) => {
+    const countAndDistancesBase = dailyDistances[i];
+    // Correct for empty days
+    const countAndDistances = countAndDistancesBase.concat(_.list(0, totalWeeks - countAndDistancesBase.length - 1, () => ({ count: 0, distance: 0 })));
+    const count = computeMeanStdDev(countAndDistances.map(v => v.count)), distance = computeMeanStdDev(countAndDistances.map(v => v.distance));
+    return [label, {
+      meanCount: count.mean,
+      stdDevCount: count.stdDev,
+      meanDistance: distance.mean,
+      stdDevDistance: distance.stdDev,
+    }];
+  }));
+};
+
 const targetCumulativeDistance = (inputs: ResponseActivityRide[]) => {
   const daily = Object.entries(targetStatisticsDaily(inputs));
   const array: [string, number][] = [];
@@ -268,6 +297,7 @@ const compile = () => {
   const targets = {
     statisticsDaily: targetStatisticsDaily(inputs),
     statisticsMonthly: targetStatisticsMonthly(inputs),
+    statisticsWeekly: targetStatisticsWeekly(inputs),
     records: targetRecords(inputs),
     cumulativeDistance: targetCumulativeDistance(inputs),
     cadence: targetCadence(inputs),

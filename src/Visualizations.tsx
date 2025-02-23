@@ -10,6 +10,7 @@ import { Grid, GridItem } from '@chakra-ui/react';
 import { SpeedDistribution } from './viz/SpeedDistribution';
 import { PowerDistribution } from './viz/PowerDistribution';
 import { SpeedAccelerationChart } from './viz/SpeedAccelerationChart';
+import { WeeklyChart } from './viz/WeeklyChart';
 
 export const Visualizations: React.FC = () => {
   const largeProps = { colSpan: 2 }
@@ -22,11 +23,14 @@ export const Visualizations: React.FC = () => {
       <GridItem {...largeProps}>
         <DailyCalendar />
       </GridItem>
-      <GridItem {...smallProps}>
+      <GridItem {...largeProps}>
         <DistanceTimeSeries />
       </GridItem>
       <GridItem {...smallProps}>
         <MonthlyChart />
+      </GridItem>
+      <GridItem {...smallProps}>
+        <WeeklyChart />
       </GridItem>
       <GridItem {...smallProps}>
         <SpeedDistribution />

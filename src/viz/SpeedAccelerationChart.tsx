@@ -11,12 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-
-// Percentile to Z-score mapping for some well-known values
-const Z_SCORES = {
-  50: 0.674,
-  95: 1.96,
-} as const;
+import { Z_SCORES } from '../utils';
 
 interface SpeedAccelerationChartContentProps {
   data: TargetAccelerations;
@@ -40,7 +35,7 @@ const SpeedAccelerationChartContent: React.FC<SpeedAccelerationChartContentProps
         Acceleration
       </Heading>
       <Text fontSize="xs" textAlign="center" mb={3}>
-        With a {percentile}% confidence interval
+        {percentile}% confidence interval
       </Text>
       <ResponsiveContainer width="100%" height={300}>
         <ComposedChart
